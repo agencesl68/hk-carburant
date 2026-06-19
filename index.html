@@ -31,6 +31,7 @@
       background: var(--paper);
       min-height: 100vh;
       color: var(--text);
+      overflow-x: hidden;
     }
     header {
       background: #fff;
@@ -69,15 +70,17 @@
     form { background: var(--card); border-radius: 18px; padding: 18px 16px 22px; box-shadow: 0 6px 24px rgba(15,15,16,.08); }
     .field { margin-bottom: 15px; }
     .row { display: flex; gap: 10px; }
-    .row .field { flex: 1; }
+    .row .field { flex: 1; min-width: 0; }
     label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
     label .req { color: var(--orange); }
     input, select, textarea {
-      width: 100%; padding: 13px 14px; font-size: 16px;
+      width: 100%; min-width: 0; max-width: 100%; padding: 13px 14px; font-size: 16px;
       border: 1.5px solid var(--line); border-radius: 11px;
       background: #f8fafc; color: var(--text); outline: none;
+      -webkit-appearance: none; appearance: none;
       transition: border-color .15s, background .15s;
     }
+    input[type="date"] { -webkit-appearance: none; min-height: 49px; }
     input:focus, select:focus, textarea:focus { border-color: var(--orange); background: #fff; }
     textarea { resize: none; min-height: 60px; }
 
