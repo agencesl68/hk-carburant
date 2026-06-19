@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <title>HK Terrassement — Suivi carburant</title>
+  <style>
+    :root {
+      --ink: #1b1b1d;
+      --paper: #f4f5f7;
+      --card: #ffffff;
+      --orange: #ff6e00;
+      --orange-d: #d65d00;
+      --orange-l: #fff2e6;
+      --line: #e3e6ea;
+      --muted: #6b7280;
+      --text: #15161a;
+      --ok: #16a34a;
+      --err: #dc2626;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--paper);
+      min-height: 100vh;
+      color: var(--text);
+    }
+    header {
+      background: #fff;
+      padding: 18px 20px 20px;
+      color: var(--text);
+      border-bottom: 4px solid var(--orange);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand .hk {
+      font-weight: 900;
+      font-size: 26px;
+      letter-spacing: 1px;
+      background: var(--orange);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 7px;
+      line-height: 1;
+    }
+    .brand .txt { line-height: 1.15; }
+    .brand .txt b { font-size: 16px; font-weight: 800; letter-spacing: 2px; color: var(--text); }
+    .brand .txt span { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .pending {
+      display: none;
+      margin-top: 14px;
+      background: var(--orange-l);
+      border: 1px solid var(--orange);
+      color: var(--orange-d);
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 9px;
+    }
+    .pending.show { display: block; }
+
+    .wrap { padding: 16px 14px 40px; max-width: 520px; margin: 0 auto; }
+    form { background: var(--card); border-radius: 18px; padding: 18px 16px 22px; box-shadow: 0 6px 24px rgba(15,15,16,.08); }
+    .field { margin-bottom: 15px; }
+    .row { display: flex; gap: 10px; }
+    .row .field { flex: 1; }
+    label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+    label .req { color: var(--orange); }
+    input, select, textarea {
+      width: 100%; padding: 13px 14px; font-size: 16px;
+      border: 1.5px solid var(--line); border-radius: 11px;
+      background: #f8fafc; color: var(--text); outline: none;
+      transition: border-color .15s, background .15s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--orange); background: #fff; }
+    textarea { resize: none; min-height: 60px; }
+
+    .mode { display: flex; gap: 8px; margin-bottom: 18px; }
+    .mode button {
+      flex: 1; padding: 14px 8px;
+      border: 2px solid var(--line); border-radius: 13px;
+      background: #f8fafc; font-size: 14px; font-weight: 800;
+      color: var(--muted); cursor: pointer; line-height: 1.2;
+    }
+    .mode button small { display: block; font-size: 11px; font-weight: 500; margin-top: 3px; opacity: .8; }
+    .mode button.active[data-mode="station"] { border-color: var(--orange); background: var(--orange-l); color: var(--orange-d); }
+    .mode button.active[data-mode="entreprise"] { border-color: var(--ink); background: var(--ink); color: #fff; }
+
+    .photo-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 16px;
+      border: 2px dashed var(--orange); border-radius: 13px; background: var(--orange-l);
+      color: var(--orange-d); font-size: 15px; font-weight: 700; cursor: pointer;
+    }
+    .photo-btn svg { width: 22px; height: 22px; }
+    #fileInput { display: none; }
+    #preview { display: none; margin-top: 10px; position: relative; }
+    #preview img { width: 100%; border-radius: 12px; display: block; }
+    #preview .clear {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(0,0,0,.6); color: #fff; border: none;
+      width: 32px; height: 32px; border-radius: 50%; font-size: 18px; cursor: pointer;
+    }
+    button.submit {
+      width: 100%; padding: 16px; margin-top: 6px;
+      font-size: 17px; font-weight: 800; color: #fff;
+      background: var(--orange); border: none; border-radius: 13px; cursor: pointer;
+    }
+    button.submit:active { background: var(--orange-d); }
+    button.submit:disabled { opacity: .6; }
+    .toast {
+      position: fixed; left: 50%; bottom: 24px;
+      transform: translateX(-50%) translateY(120px);
+      background: var(--ink); color: #fff;
+      padding: 14px 22px; border-radius: 12px; font-size: 15px; font-weight: 600;
+      box-shadow: 0 8px 30px rgba(0,0,0,.3); transition: transform .3s; z-index: 50; max-width: 90%;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.ok { background: var(--ok); }
+    .toast.err { background: var(--err); }
+    .toast.warn { background: var(--orange-d); }
+    .hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="hk">HK</span>
+      <span class="txt"><b>TERRASSEMENT</b><span>Suivi des pleins carburant</span></span>
+    </div>
+    <div class="pending" id="pending"></div>
+  </header>
+
+  <div class="wrap">
+    <form id="form">
+      <div class="mode">
+        <button type="button" class="active" data-mode="station" id="btnStation">
+          Station externe<small>Ticket à payer</small>
+        </button>
+        <button type="button" data-mode="entreprise" id="btnEntreprise">
+          Pompe entreprise<small>Cuve interne</small>
+        </button>
+      </div>
+      <input type="hidden" name="type_pompe" id="typePompe" value="Station externe">
+
+      <!-- Chauffeur : les deux modes -->
+      <div class="field">
+        <label>Chauffeur <span class="req">*</span></label>
+        <input type="text" name="chauffeur" placeholder="Nom du chauffeur" required>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>Immatriculation <span class="req">*</span></label>
+          <input type="text" name="immatriculation" list="flotte" placeholder="AA-123-BB" style="text-transform:uppercase" required>
+          <datalist id="flotte"></datalist>
+        </div>
+        <div class="field">
+          <label>Date <span class="req">*</span></label>
+          <input type="date" name="date" required>
+        </div>
+      </div>
+
+      <!-- Km : station uniquement -->
+      <div class="field station-only">
+        <label>Kilométrage compteur</label>
+        <input type="number" name="kilometrage" inputmode="numeric" placeholder="ex: 124500">
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>Carburant <span class="req">*</span></label>
+          <select name="carburant" required>
+            <option value="Gazole">Gazole</option>
+            <option value="GNR">GNR</option>
+            <option value="SP95">SP95</option>
+            <option value="SP95-E10">SP95-E10</option>
+            <option value="SP98">SP98</option>
+            <option value="AdBlue">AdBlue</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Litres <span class="req">*</span></label>
+          <input type="number" step="0.01" name="litres" inputmode="decimal" placeholder="ex: 58.40" required>
+        </div>
+      </div>
+
+      <!-- Prix / Montant : station uniquement -->
+      <div class="row station-only">
+        <div class="field">
+          <label>Prix / litre (€)</label>
+          <input type="number" step="0.001" name="prix_litre" inputmode="decimal" placeholder="ex: 1.789">
+        </div>
+        <div class="field">
+          <label>Montant TTC (€) <span class="req">*</span></label>
+          <input type="number" step="0.01" name="montant" inputmode="decimal" placeholder="ex: 104.48" required>
+        </div>
+      </div>
+
+      <!-- Station / Paiement : station uniquement -->
+      <div class="row station-only">
+        <div class="field">
+          <label>Station</label>
+          <input type="text" name="station" placeholder="ex: Total Altkirch">
+        </div>
+        <div class="field">
+          <label>Paiement</label>
+          <select name="paiement">
+            <option value="Carte carburant">Carte carburant</option>
+            <option value="CB entreprise">CB entreprise</option>
+            <option value="Espèces">Espèces</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Photo : station uniquement -->
+      <div class="field station-only">
+        <label>Photo du ticket <span class="req">*</span></label>
+        <label class="photo-btn" for="fileInput">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          <span id="photoLabel">Prendre en photo</span>
+        </label>
+        <input type="file" id="fileInput" accept="image/*" capture="environment">
+        <div id="preview">
+          <img id="previewImg" alt="ticket">
+          <button type="button" class="clear" id="clearPhoto">×</button>
+        </div>
+        <div class="hint">Photo compressée automatiquement avant l'envoi.</div>
+      </div>
+
+      <!-- Note : station uniquement -->
+      <div class="field station-only">
+        <label>Note (optionnel)</label>
+        <textarea name="note" placeholder="Remarque éventuelle"></textarea>
+      </div>
+
+      <button type="submit" class="submit" id="submitBtn">Enregistrer le plein</button>
+    </form>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    /* ===== CONFIG (à éditer) ===== */
+    const WEBHOOK_URL = "https://hook.eu1.make.com/u9h5sjaxlb6qidcf6esgo9gcfw3nbtei";
+    const APP_TOKEN   = "HK-CHANGE-MOI-2026"; // sécurité : doit matcher le filtre Make
+    const FLOTTE = ["EA-123-AB", "FT-456-CD", "GH-789-EF"]; // ← remplace par les vraies plaques
+    /* ============================= */
+
+    const QUEUE_KEY = "hk_carburant_queue";
+    const form = document.querySelector('#form');
+    const fileInput = document.querySelector('#fileInput');
+    const preview = document.querySelector('#preview');
+    const previewImg = document.querySelector('#previewImg');
+    const photoLabel = document.querySelector('#photoLabel');
+    const clearPhoto = document.querySelector('#clearPhoto');
+    const submitBtn = document.querySelector('#submitBtn');
+    const toast = document.querySelector('#toast');
+    const pending = document.querySelector('#pending');
+    const typePompe = document.querySelector('#typePompe');
+    const btnStation = document.querySelector('#btnStation');
+    const btnEntreprise = document.querySelector('#btnEntreprise');
+    let photoBase64 = null;
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+
+    const dl = document.querySelector('#flotte');
+    FLOTTE.forEach(p => { const o = document.createElement('option'); o.value = p; dl.appendChild(o); });
+
+    form.date.value = new Date().toISOString().slice(0, 10);
+
+    function setMode(mode) {
+      const entreprise = mode === 'entreprise';
+      typePompe.value = entreprise ? 'Pompe entreprise' : 'Station externe';
+      btnStation.classList.toggle('active', !entreprise);
+      btnEntreprise.classList.toggle('active', entreprise);
+      document.querySelectorAll('.station-only').forEach(el => {
+        el.style.display = entreprise ? 'none' : '';
+        el.querySelectorAll('input, select, textarea').forEach(i => { i.disabled = entreprise; });
+      });
+    }
+    btnStation.addEventListener('click', () => setMode('station'));
+    btnEntreprise.addEventListener('click', () => setMode('entreprise'));
+
+    function autoCalc() {
+      const l = parseFloat(form.litres.value);
+      const p = parseFloat(form.prix_litre.value);
+      const m = parseFloat(form.montant.value);
+      if (l > 0 && p > 0 && !m) form.montant.value = (l * p).toFixed(2);
+      else if (l > 0 && m > 0 && !p) form.prix_litre.value = (m / l).toFixed(3);
+    }
+    form.litres.addEventListener('blur', autoCalc);
+    form.prix_litre.addEventListener('blur', autoCalc);
+    form.montant.addEventListener('blur', autoCalc);
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          const maxW = 1200;
+          const scale = Math.min(1, maxW / img.width);
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          photoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          previewImg.src = photoBase64;
+          preview.style.display = 'block';
+          photoLabel.textContent = 'Changer la photo';
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    clearPhoto.addEventListener('click', () => {
+      photoBase64 = null;
+      fileInput.value = '';
+      preview.style.display = 'none';
+      photoLabel.textContent = 'Prendre en photo';
+    });
+
+    function showToast(msg, type) {
+      toast.textContent = msg;
+      toast.className = 'toast show ' + (type || '');
+      setTimeout(() => { toast.className = 'toast ' + (type || ''); }, 3500);
+    }
+
+    /* ===== File d'attente hors-ligne ===== */
+    function getQueue() { try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch { return []; } }
+    function setQueue(q) { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); updateBadge(); }
+    function updateBadge() {
+      const n = getQueue().length;
+      pending.textContent = n ? `⏳ ${n} plein(s) en attente de réseau — envoi automatique dès que possible` : '';
+      pending.classList.toggle('show', n > 0);
+    }
+    async function send(payload) {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+    }
+    async function flushQueue() {
+      let q = getQueue();
+      if (!q.length) return;
+      const remaining = [];
+      for (const item of q) {
+        try { await send(item); } catch { remaining.push(item); }
+      }
+      setQueue(remaining);
+      if (q.length && !remaining.length) showToast(`✅ ${q.length} plein(s) synchronisé(s)`, 'ok');
+    }
+    window.addEventListener('online', flushQueue);
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const isStation = typePompe.value === 'Station externe';
+      if (isStation && !photoBase64) { showToast('Ajoute la photo du ticket', 'err'); return; }
+
+      const data = Object.fromEntries(new FormData(form).entries());
+      data.immatriculation = (data.immatriculation || '').toUpperCase();
+      if (photoBase64) data.photo = photoBase64.split(',')[1];
+      data.envoye_le = new Date().toISOString();
+      data.token = APP_TOKEN;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Envoi en cours…';
+      const mode = isStation ? 'station' : 'entreprise';
+
+      try {
+        await send(data);
+        showToast('✅ Plein enregistré', 'ok');
+      } catch (err) {
+        const q = getQueue(); q.push(data); setQueue(q);
+        showToast('📥 Hors-ligne : enregistré, sera envoyé automatiquement', 'warn');
+      } finally {
+        form.reset();
+        form.date.value = new Date().toISOString().slice(0, 10);
+        photoBase64 = null; fileInput.value = '';
+        preview.style.display = 'none'; photoLabel.textContent = 'Prendre en photo';
+        setMode(mode);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Enregistrer le plein';
+      }
+    });
+
+    updateBadge();
+    flushQueue();
+  </script>
+</body>
+</html>

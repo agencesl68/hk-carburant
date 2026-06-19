@@ -1,0 +1,19 @@
+{
+  "name": "HK Terrassement — Suivi carburant",
+  "short_name": "HK Carburant",
+  "description": "Saisie des pleins carburant pour la flotte HK Terrassement",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#ff6e00",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
