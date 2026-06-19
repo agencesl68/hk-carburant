@@ -9,6 +9,9 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <title>HK Terrassement — Suivi carburant</title>
   <style>
     :root {
@@ -27,7 +30,7 @@
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-family: 'Barlow', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       background: var(--paper);
       min-height: 100vh;
       color: var(--text);
@@ -123,7 +126,6 @@
 <body>
   <header>
     <img src="logo.png" alt="HK Terrassement" class="logo">
-    <p class="sub">Suivi des pleins carburant</p>
     <div class="pending" id="pending"></div>
   </header>
 
@@ -177,7 +179,7 @@
         </div>
         <div class="field">
           <label>Litres <span class="req">*</span></label>
-          <input type="number" step="0.01" name="litres" inputmode="decimal" placeholder="ex: 58.40" required>
+          <input type="text" name="litres" inputmode="decimal" placeholder="ex: 58,40" required>
         </div>
       </div>
 
@@ -185,11 +187,11 @@
       <div class="row station-only">
         <div class="field">
           <label>Prix / litre (€)</label>
-          <input type="number" step="0.001" name="prix_litre" inputmode="decimal" placeholder="ex: 1.789">
+          <input type="text" name="prix_litre" inputmode="decimal" placeholder="ex: 1,789">
         </div>
         <div class="field">
           <label>Montant TTC (€) <span class="req">*</span></label>
-          <input type="number" step="0.01" name="montant" inputmode="decimal" placeholder="ex: 104.48" required>
+          <input type="text" name="montant" inputmode="decimal" placeholder="ex: 104,48" required>
         </div>
       </div>
 
@@ -284,12 +286,13 @@
     btnStation.addEventListener('click', () => setMode('station'));
     btnEntreprise.addEventListener('click', () => setMode('entreprise'));
 
+    function num(v) { return parseFloat((v || '').replace(',', '.')); }
     function autoCalc() {
-      const l = parseFloat(form.litres.value);
-      const p = parseFloat(form.prix_litre.value);
-      const m = parseFloat(form.montant.value);
-      if (l > 0 && p > 0 && !m) form.montant.value = (l * p).toFixed(2);
-      else if (l > 0 && m > 0 && !p) form.prix_litre.value = (m / l).toFixed(3);
+      const l = num(form.litres.value);
+      const p = num(form.prix_litre.value);
+      const m = num(form.montant.value);
+      if (l > 0 && p > 0 && !m) form.montant.value = (l * p).toFixed(2).replace('.', ',');
+      else if (l > 0 && m > 0 && !p) form.prix_litre.value = (m / l).toFixed(3).replace('.', ',');
     }
     form.litres.addEventListener('blur', autoCalc);
     form.prix_litre.addEventListener('blur', autoCalc);
@@ -366,6 +369,7 @@
 
       const data = Object.fromEntries(new FormData(form).entries());
       data.immatriculation = (data.immatriculation || '').toUpperCase();
+      ['litres', 'prix_litre', 'montant'].forEach(k => { if (data[k]) data[k] = data[k].replace(',', '.'); });
       if (photoBase64) data.photo = photoBase64.split(',')[1];
       data.envoye_le = new Date().toISOString();
       data.token = APP_TOKEN;
