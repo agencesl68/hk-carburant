@@ -416,7 +416,9 @@
       if (photos.ticket) data.photo = photos.ticket.split(',')[1];
       if (photos.avant) data.photo_avant = photos.avant.split(',')[1];
       if (photos.apres) data.photo_apres = photos.apres.split(',')[1];
-      data.envoye_le = new Date().toISOString();
+      const _d = new Date();
+      const _p = n => String(n).padStart(2, '0');
+      data.envoye_le = `${_p(_d.getDate())}/${_p(_d.getMonth() + 1)}/${_d.getFullYear()} ${_p(_d.getHours())}h${_p(_d.getMinutes())}`;
       data.token = APP_TOKEN;
 
       submitBtn.disabled = true;
@@ -425,7 +427,7 @@
 
       try {
         await send(data);
-        showToast('Plein enregistré', 'ok');
+        showToast('✅ Plein enregistré', 'ok');
       } catch (err) {
         const q = getQueue(); q.push(data); setQueue(q);
         showToast('📥 Hors-ligne : enregistré, sera envoyé automatiquement', 'warn');
