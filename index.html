@@ -59,7 +59,7 @@
     .pending.show { display: block; }
 
     .wrap { padding: 16px 14px 40px; max-width: 520px; margin: 0 auto; }
-    form { background: var(--card); border-radius: 18px; padding: 18px 16px 22px; box-shadow: 0 6px 24px rgba(15,15,16,.08); }
+    form { background: transparent; padding: 16px 6px 28px; }
     .field { margin-bottom: 15px; }
     .row { display: flex; gap: 10px; }
     .row .field { flex: 1; min-width: 0; }
@@ -67,25 +67,27 @@
     label .req { color: var(--orange); }
     input, select, textarea {
       width: 100%; min-width: 0; max-width: 100%; padding: 13px 14px; font-size: 16px;
-      border: 1.5px solid var(--line); border-radius: 11px;
-      background: #f8fafc; color: var(--text); outline: none;
+      border: none; border-radius: 12px;
+      background: #fff; color: var(--text); outline: none;
+      box-shadow: 0 1px 3px rgba(15,15,16,.10);
       -webkit-appearance: none; appearance: none;
-      transition: border-color .15s, background .15s;
+      transition: box-shadow .15s;
     }
     input[type="date"] { -webkit-appearance: none; min-height: 49px; }
-    input:focus, select:focus, textarea:focus { border-color: var(--orange); background: #fff; }
+    input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 2px var(--orange); }
     textarea { resize: none; min-height: 60px; }
 
     .mode { display: flex; gap: 8px; margin-bottom: 18px; }
     .mode button {
       flex: 1; padding: 14px 8px;
-      border: 2px solid var(--line); border-radius: 13px;
-      background: #f8fafc; font-size: 14px; font-weight: 800;
+      border: none; border-radius: 13px;
+      background: #fff; font-size: 14px; font-weight: 800;
       color: var(--muted); cursor: pointer; line-height: 1.2;
+      box-shadow: 0 1px 3px rgba(15,15,16,.10);
     }
     .mode button small { display: block; font-size: 11px; font-weight: 500; margin-top: 3px; opacity: .8; }
-    .mode button.active[data-mode="station"] { border-color: var(--orange); background: var(--orange-l); color: var(--orange-d); }
-    .mode button.active[data-mode="entreprise"] { border-color: var(--ink); background: var(--ink); color: #fff; }
+    .mode button.active[data-mode="station"] { background: var(--orange); color: #fff; box-shadow: 0 3px 10px rgba(255,110,0,.35); }
+    .mode button.active[data-mode="entreprise"] { background: var(--ink); color: #fff; box-shadow: 0 3px 10px rgba(21,22,26,.3); }
 
     .photo-btn {
       display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -107,6 +109,7 @@
       width: 100%; padding: 16px; margin-top: 6px;
       font-size: 17px; font-weight: 800; color: #fff;
       background: var(--orange); border: none; border-radius: 13px; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(255,110,0,.35);
     }
     button.submit:active { background: var(--orange-d); }
     button.submit:disabled { opacity: .6; }
