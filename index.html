@@ -94,10 +94,11 @@
       color: var(--orange-d); font-size: 15px; font-weight: 700; cursor: pointer;
     }
     .photo-btn svg { width: 22px; height: 22px; }
-    #fileInput { display: none; }
-    #preview { display: none; margin-top: 10px; position: relative; }
-    #preview img { width: 100%; border-radius: 12px; display: block; }
-    #preview .clear {
+    input[type="file"] { display: none; }
+    .cuve-only { display: none; }
+    .preview { display: none; margin-top: 10px; position: relative; }
+    .preview img { width: 100%; border-radius: 12px; display: block; }
+    .preview .clear {
       position: absolute; top: 8px; right: 8px;
       background: rgba(0,0,0,.6); color: #fff; border: none;
       width: 32px; height: 32px; border-radius: 50%; font-size: 18px; cursor: pointer;
@@ -140,6 +141,21 @@
         </button>
       </div>
       <input type="hidden" name="type_pompe" id="typePompe" value="Station externe">
+
+      <!-- Photo compteur AVANT : pompe entreprise, en tout premier -->
+      <div class="field cuve-only">
+        <label>Photo compteur AVANT le plein <span class="req">*</span></label>
+        <label class="photo-btn" for="fileAvant">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          <span class="cam-label">Photo du compteur (avant)</span>
+        </label>
+        <input type="file" id="fileAvant" data-photo="avant" accept="image/*" capture="environment">
+        <div class="preview"><img alt="compteur avant"><button type="button" class="clear">×</button></div>
+        <div class="hint">Relevé de la pompe AVANT de servir.</div>
+      </div>
 
       <!-- Chauffeur : les deux modes -->
       <div class="field">
@@ -212,22 +228,34 @@
         </div>
       </div>
 
-      <!-- Photo : station uniquement -->
+      <!-- Photo ticket : station uniquement -->
       <div class="field station-only">
         <label>Photo du ticket <span class="req">*</span></label>
-        <label class="photo-btn" for="fileInput">
+        <label class="photo-btn" for="fileTicket">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
             <circle cx="12" cy="13" r="4"/>
           </svg>
-          <span id="photoLabel">Prendre en photo</span>
+          <span class="cam-label">Prendre en photo</span>
         </label>
-        <input type="file" id="fileInput" accept="image/*" capture="environment">
-        <div id="preview">
-          <img id="previewImg" alt="ticket">
-          <button type="button" class="clear" id="clearPhoto">×</button>
-        </div>
+        <input type="file" id="fileTicket" data-photo="ticket" accept="image/*" capture="environment">
+        <div class="preview"><img alt="ticket"><button type="button" class="clear">×</button></div>
         <div class="hint">Photo compressée automatiquement avant l'envoi.</div>
+      </div>
+
+      <!-- Photo compteur APRÈS : pompe entreprise uniquement -->
+      <div class="field cuve-only">
+        <label>Photo compteur APRÈS le plein <span class="req">*</span></label>
+        <label class="photo-btn" for="fileApres">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          <span class="cam-label">Photo du compteur (après)</span>
+        </label>
+        <input type="file" id="fileApres" data-photo="apres" accept="image/*" capture="environment">
+        <div class="preview"><img alt="compteur apres"><button type="button" class="clear">×</button></div>
+        <div class="hint">Relevé de la pompe APRÈS avoir servi.</div>
       </div>
 
       <!-- Note : station uniquement -->
@@ -251,18 +279,54 @@
 
     const QUEUE_KEY = "hk_carburant_queue";
     const form = document.querySelector('#form');
-    const fileInput = document.querySelector('#fileInput');
-    const preview = document.querySelector('#preview');
-    const previewImg = document.querySelector('#previewImg');
-    const photoLabel = document.querySelector('#photoLabel');
-    const clearPhoto = document.querySelector('#clearPhoto');
     const submitBtn = document.querySelector('#submitBtn');
     const toast = document.querySelector('#toast');
     const pending = document.querySelector('#pending');
     const typePompe = document.querySelector('#typePompe');
     const btnStation = document.querySelector('#btnStation');
     const btnEntreprise = document.querySelector('#btnEntreprise');
-    let photoBase64 = null;
+
+    // Gestion générique des photos (ticket station + compteurs cuve avant/après)
+    const photos = { ticket: null, avant: null, apres: null };
+    const photoResets = [];
+    document.querySelectorAll('input[type="file"][data-photo]').forEach(input => {
+      const key = input.dataset.photo;
+      const block = input.closest('.field');
+      const previewWrap = block.querySelector('.preview');
+      const previewImg = previewWrap.querySelector('img');
+      const camLabel = block.querySelector('.cam-label');
+      const clearBtn = previewWrap.querySelector('.clear');
+      const defaultLabel = camLabel.textContent;
+      function reset() {
+        photos[key] = null; input.value = '';
+        previewWrap.style.display = 'none'; camLabel.textContent = defaultLabel;
+      }
+      photoResets.push(reset);
+      clearBtn.addEventListener('click', reset);
+      input.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => {
+            const maxW = 1600;
+            const scale = Math.min(1, maxW / img.width);
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            photos[key] = canvas.toDataURL('image/jpeg', 0.85);
+            previewImg.src = photos[key];
+            previewWrap.style.display = 'block';
+            camLabel.textContent = 'Changer la photo';
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+    function resetAllPhotos() { photoResets.forEach(r => r()); }
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -282,6 +346,10 @@
         el.style.display = entreprise ? 'none' : '';
         el.querySelectorAll('input, select, textarea').forEach(i => { i.disabled = entreprise; });
       });
+      document.querySelectorAll('.cuve-only').forEach(el => {
+        el.style.display = entreprise ? 'block' : 'none';
+        el.querySelectorAll('input, select, textarea').forEach(i => { i.disabled = !entreprise; });
+      });
     }
     btnStation.addEventListener('click', () => setMode('station'));
     btnEntreprise.addEventListener('click', () => setMode('entreprise'));
@@ -297,36 +365,6 @@
     form.litres.addEventListener('blur', autoCalc);
     form.prix_litre.addEventListener('blur', autoCalc);
     form.montant.addEventListener('blur', autoCalc);
-
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const img = new Image();
-        img.onload = () => {
-          const maxW = 1600;
-          const scale = Math.min(1, maxW / img.width);
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width * scale;
-          canvas.height = img.height * scale;
-          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-          photoBase64 = canvas.toDataURL('image/jpeg', 0.85);
-          previewImg.src = photoBase64;
-          preview.style.display = 'block';
-          photoLabel.textContent = 'Changer la photo';
-        };
-        img.src = ev.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-
-    clearPhoto.addEventListener('click', () => {
-      photoBase64 = null;
-      fileInput.value = '';
-      preview.style.display = 'none';
-      photoLabel.textContent = 'Prendre en photo';
-    });
 
     function showToast(msg, type) {
       toast.textContent = msg;
@@ -365,12 +403,16 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const isStation = typePompe.value === 'Station externe';
-      if (isStation && !photoBase64) { showToast('Ajoute la photo du ticket', 'err'); return; }
+      if (isStation && !photos.ticket) { showToast('Ajoute la photo du ticket', 'err'); return; }
+      if (!isStation && !photos.avant) { showToast('Photo du compteur AVANT obligatoire', 'err'); return; }
+      if (!isStation && !photos.apres) { showToast('Photo du compteur APRÈS obligatoire', 'err'); return; }
 
       const data = Object.fromEntries(new FormData(form).entries());
       data.immatriculation = (data.immatriculation || '').toUpperCase();
       ['litres', 'prix_litre', 'montant'].forEach(k => { if (data[k]) data[k] = data[k].replace(',', '.'); });
-      if (photoBase64) data.photo = photoBase64.split(',')[1];
+      if (photos.ticket) data.photo = photos.ticket.split(',')[1];
+      if (photos.avant) data.photo_avant = photos.avant.split(',')[1];
+      if (photos.apres) data.photo_apres = photos.apres.split(',')[1];
       data.envoye_le = new Date().toISOString();
       data.token = APP_TOKEN;
 
@@ -387,8 +429,7 @@
       } finally {
         form.reset();
         form.date.value = new Date().toISOString().slice(0, 10);
-        photoBase64 = null; fileInput.value = '';
-        preview.style.display = 'none'; photoLabel.textContent = 'Prendre en photo';
+        resetAllPhotos();
         setMode(mode);
         submitBtn.disabled = false;
         submitBtn.textContent = 'Enregistrer le plein';
