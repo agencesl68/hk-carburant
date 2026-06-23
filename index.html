@@ -425,7 +425,7 @@
 
       try {
         await send(data);
-        showToast('✅ Plein enregistré', 'ok');
+        showToast('Plein enregistré', 'ok');
       } catch (err) {
         const q = getQueue(); q.push(data); setQueue(q);
         showToast('📥 Hors-ligne : enregistré, sera envoyé automatiquement', 'warn');
