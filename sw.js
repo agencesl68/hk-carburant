@@ -1,5 +1,5 @@
 // Service worker — cache l'app pour qu'elle s'ouvre même sans réseau
-const CACHE = "hk-carburant-v12";
+const CACHE = "hk-carburant-v13";
 const ASSETS = [
   "./",
   "./index.html",
