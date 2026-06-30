@@ -169,8 +169,20 @@
       <div class="row">
         <div class="field">
           <label>Immatriculation <span class="req">*</span></label>
-          <input type="text" name="immatriculation" list="flotte" placeholder="AA-123-BB" style="text-transform:uppercase" required>
-          <datalist id="flotte"></datalist>
+          <select name="immatriculation" required>
+            <option value="">— Sélectionner —</option>
+            <option value="GT-255-BA">GT-255-BA</option>
+            <option value="HJ-605-DC">HJ-605-DC</option>
+            <option value="HJ-813-ZF">HJ-813-ZF</option>
+            <option value="FZ-813-DT">FZ-813-DT</option>
+            <option value="FE-982-KB">FE-982-KB</option>
+            <option value="GP-453-RT">GP-453-RT</option>
+            <option value="FP-321-JZ">FP-321-JZ</option>
+            <option value="EZ-180-AN">EZ-180-AN</option>
+            <option value="HC-109-AX">HC-109-AX</option>
+            <option value="GT-675-ZB">GT-675-ZB</option>
+            <option value="GY-969-AX">GY-969-AX</option>
+          </select>
         </div>
         <div class="field">
           <label>Date <span class="req">*</span></label>
@@ -271,7 +283,6 @@
     /* ===== CONFIG (à éditer) ===== */
     const WEBHOOK_URL = "https://hook.eu1.make.com/u9h5sjaxlb6qidcf6esgo9gcfw3nbtei";
     const APP_TOKEN   = "HK-CHANGE-MOI-2026"; // sécurité : doit matcher le filtre Make
-    const FLOTTE = ["EA-123-AB", "FT-456-CD", "GH-789-EF"]; // ← remplace par les vraies plaques
     /* ============================= */
 
     const QUEUE_KEY = "hk_carburant_queue";
@@ -329,8 +340,6 @@
       navigator.serviceWorker.register('sw.js').catch(() => {});
     }
 
-    const dl = document.querySelector('#flotte');
-    FLOTTE.forEach(p => { const o = document.createElement('option'); o.value = p; dl.appendChild(o); });
 
     form.date.value = new Date().toISOString().slice(0, 10);
 
