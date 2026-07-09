@@ -76,6 +76,14 @@
     input[type="date"] { -webkit-appearance: none; min-height: 49px; }
     input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 2px var(--orange); }
     textarea { resize: none; min-height: 60px; }
+    .combo { position: relative; }
+    .combo-chev { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--orange); display: flex; pointer-events: none; }
+    .combo-list { list-style: none; margin: 6px 0 0; padding: 6px; position: absolute; left: 0; right: 0; top: 100%; background: #fff; border-radius: 12px; box-shadow: 0 10px 28px rgba(15,15,16,.18); max-height: 240px; overflow-y: auto; z-index: 30; display: none; }
+    .combo-list.show { display: block; }
+    .combo-list li { padding: 12px; border-radius: 9px; cursor: pointer; font-size: 15px; color: var(--text); }
+    .combo-list li.hl { background: var(--orange-l); }
+    .combo-list li.custom { color: var(--orange-d); background: var(--orange-l); font-weight: 700; }
+    .combo-list li.empty { color: var(--muted); font-size: 13px; cursor: default; }
 
     .mode { display: flex; gap: 8px; margin-bottom: 18px; }
     .mode button {
@@ -169,20 +177,12 @@
       <div class="row">
         <div class="field">
           <label>Immatriculation <span class="req">*</span></label>
-          <select name="immatriculation" required>
-            <option value="">— Sélectionner —</option>
-            <option value="GT-255-BA">GT-255-BA</option>
-            <option value="HJ-605-DC">HJ-605-DC</option>
-            <option value="HJ-813-ZF">HJ-813-ZF</option>
-            <option value="FZ-813-DT">FZ-813-DT</option>
-            <option value="FE-982-KB">FE-982-KB</option>
-            <option value="GP-453-RT">GP-453-RT</option>
-            <option value="FP-321-JZ">FP-321-JZ</option>
-            <option value="EZ-180-AN">EZ-180-AN</option>
-            <option value="HC-109-AX">HC-109-AX</option>
-            <option value="GT-675-ZB">GT-675-ZB</option>
-            <option value="GY-969-AX">GY-969-AX</option>
-          </select>
+          <div class="combo" id="immatCombo">
+            <input type="text" name="immatriculation" id="immatInput" autocomplete="off" placeholder="AA-123-BB" style="text-transform:uppercase; padding-right:38px" required>
+            <span class="combo-chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></span>
+            <ul class="combo-list" id="immatList" role="listbox"></ul>
+          </div>
+          <div class="hint">Choisis dans la liste ou tape une nouvelle plaque.</div>
         </div>
         <div class="field">
           <label>Date <span class="req">*</span></label>
@@ -405,6 +405,42 @@
       if (q.length && !remaining.length) showToast(`✅ ${q.length} plein(s) synchronisé(s)`, 'ok');
     }
     window.addEventListener('online', flushQueue);
+
+    /* ===== Combobox immatriculation (liste + saisie libre) ===== */
+    (function () {
+      const PLATES = ["GT-255-BA", "HJ-605-DC", "HJ-813-ZF", "FZ-813-DT", "FE-982-KB", "GP-453-RT", "FP-321-JZ", "EZ-180-AN", "HC-109-AX", "GT-675-ZB", "GY-969-AX"];
+      const combo = document.querySelector('#immatCombo');
+      const input = document.querySelector('#immatInput');
+      const listEl = document.querySelector('#immatList');
+      let openState = false;
+      function render() {
+        const q = input.value.trim().toUpperCase();
+        const matches = PLATES.filter(p => p.indexOf(q) > -1);
+        const custom = q && PLATES.indexOf(q) === -1;
+        listEl.innerHTML = '';
+        if (custom) {
+          const li = document.createElement('li');
+          li.className = 'custom';
+          li.textContent = 'Utiliser « ' + q + ' »';
+          li.addEventListener('mousedown', e => { e.preventDefault(); choose(q); });
+          listEl.appendChild(li);
+        }
+        matches.forEach(p => {
+          const li = document.createElement('li');
+          li.textContent = p;
+          li.addEventListener('mousedown', e => { e.preventDefault(); choose(p); });
+          listEl.appendChild(li);
+        });
+        if (!matches.length && !custom) {
+          const li = document.createElement('li'); li.className = 'empty'; li.textContent = 'Aucune plaque'; listEl.appendChild(li);
+        }
+      }
+      function setOpen(o) { openState = o; listEl.classList.toggle('show', o); if (o) render(); }
+      function choose(v) { input.value = v; setOpen(false); }
+      input.addEventListener('focus', () => setOpen(true));
+      input.addEventListener('input', () => { if (openState) render(); else setOpen(true); });
+      document.addEventListener('mousedown', e => { if (!combo.contains(e.target)) setOpen(false); });
+    })();
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
