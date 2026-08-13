@@ -84,6 +84,22 @@
     .combo-list li.hl { background: var(--orange-l); }
     .combo-list li.custom { color: var(--orange-d); background: var(--orange-l); font-weight: 700; }
     .combo-list li.empty { color: var(--muted); font-size: 13px; cursor: default; }
+    .lock { position: fixed; inset: 0; z-index: 200; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
+    .lock.hidden { display: none; }
+    .lock-logo { height: 60px; width: auto; margin-bottom: 22px; }
+    .lock-title { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 5px; }
+    .lock-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+    .lock-dots { display: flex; gap: 16px; margin-bottom: 14px; }
+    .lock-dots span { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--orange); background: #fff; }
+    .lock-dots span.on { background: var(--orange); }
+    .lock-err { min-height: 18px; font-size: 13px; font-weight: 700; color: var(--err); margin-bottom: 16px; }
+    .lock.shake .lock-dots { animation: lockShake .42s; }
+    @keyframes lockShake { 0%,100%{transform:translateX(0);} 20%,60%{transform:translateX(-9px);} 40%,80%{transform:translateX(9px);} }
+    .lock-pad { display: grid; grid-template-columns: repeat(3, 74px); gap: 14px; }
+    .lock-pad button { height: 74px; border-radius: 50%; border: none; background: var(--paper); color: var(--text); font-size: 26px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .lock-pad button:active { background: var(--orange-l); }
+    .lock-pad button[data-k="del"] { background: transparent; color: var(--orange); }
+    .lock-pad .lock-empty { visibility: hidden; }
 
     .mode { display: flex; gap: 8px; margin-bottom: 18px; }
     .mode button {
@@ -136,6 +152,47 @@
   </style>
 </head>
 <body>
+  <div id="lock" class="lock">
+    <img src="logo.png" alt="HK Terrassement" class="lock-logo">
+    <div class="lock-title">Code d'accès</div>
+    <div class="lock-sub">Entre le code pour ouvrir l'application</div>
+    <div class="lock-dots" id="lockDots"><span></span><span></span><span></span><span></span></div>
+    <div class="lock-err" id="lockErr"></div>
+    <div class="lock-pad" id="lockPad">
+      <button type="button" data-k="1">1</button>
+      <button type="button" data-k="2">2</button>
+      <button type="button" data-k="3">3</button>
+      <button type="button" data-k="4">4</button>
+      <button type="button" data-k="5">5</button>
+      <button type="button" data-k="6">6</button>
+      <button type="button" data-k="7">7</button>
+      <button type="button" data-k="8">8</button>
+      <button type="button" data-k="9">9</button>
+      <button type="button" class="lock-empty" disabled></button>
+      <button type="button" data-k="0">0</button>
+      <button type="button" data-k="del" aria-label="Effacer">⌫</button>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var CODE = "1664";
+      var lock = document.getElementById('lock'), dots = document.getElementById('lockDots').children, err = document.getElementById('lockErr');
+      var val = "";
+      function refresh() { for (var i = 0; i < 4; i++) dots[i].classList.toggle('on', i < val.length); }
+      function check() {
+        if (val === CODE) { lock.classList.add('hidden'); }
+        else { err.textContent = "Code incorrect"; lock.classList.add('shake'); setTimeout(function () { lock.classList.remove('shake'); val = ""; refresh(); }, 450); }
+      }
+      document.getElementById('lockPad').addEventListener('click', function (e) {
+        var b = e.target.closest('button'); if (!b) return; var k = b.getAttribute('data-k'); if (!k) return;
+        if (k === 'del') { val = val.slice(0, -1); err.textContent = ""; refresh(); return; }
+        if (val.length >= 4) return;
+        val += k; err.textContent = ""; refresh();
+        if (val.length === 4) setTimeout(check, 120);
+      });
+    })();
+  </script>
+
   <header>
     <img src="logo.png" alt="HK Terrassement" class="logo">
     <div class="pending" id="pending"></div>
@@ -408,7 +465,7 @@
 
     /* ===== Combobox immatriculation (liste + saisie libre) ===== */
     (function () {
-      const PLATES = ["GT-255-BA", "HJ-605-DC", "HJ-813-ZF", "FZ-813-DT", "FE-982-KB", "GP-453-RT", "FP-321-JZ", "EZ-180-AN", "HC-109-AX", "GT-675-ZB", "GY-969-AX", "AJ-378-QB"];
+      const PLATES = ["GT-255-BA", "HJ-605-DC", "HJ-813-ZF", "FZ-813-DT", "FE-982-KB", "GP-453-RT", "FP-321-JZ", "EZ-180-AN", "HC-109-AX", "GT-675-ZB", "GY-969-AX"];
       const combo = document.querySelector('#immatCombo');
       const input = document.querySelector('#immatInput');
       const listEl = document.querySelector('#immatList');
