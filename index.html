@@ -1,544 +1,574 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#ffffff">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon.png">
-  <link rel="apple-touch-icon" href="icon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <title>HK Terrassement — Suivi carburant</title>
-  <style>
-    :root {
-      --ink: #1b1b1d;
-      --paper: #f4f5f7;
-      --card: #ffffff;
-      --orange: #ff6e00;
-      --orange-d: #d65d00;
-      --orange-l: #fff2e6;
-      --line: #e3e6ea;
-      --muted: #6b7280;
-      --text: #15161a;
-      --ok: #16a34a;
-      --err: #dc2626;
-    }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body {
-      margin: 0;
-      font-family: 'Barlow', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      background: var(--paper);
-      min-height: 100vh;
-      color: var(--text);
-      overflow-x: hidden;
-    }
-    header {
-      background: #fff;
-      padding: 16px 20px 18px;
-      color: var(--text);
-      border-bottom: 4px solid var(--orange);
-      text-align: center;
-    }
-    header .logo { height: 84px; width: auto; max-width: 82%; display: block; margin: 0 auto; }
-    header .sub { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
-    .pending {
-      display: none;
-      margin-top: 14px;
-      background: var(--orange-l);
-      border: 1px solid var(--orange);
-      color: var(--orange-d);
-      font-size: 12.5px;
-      font-weight: 600;
-      padding: 8px 12px;
-      border-radius: 9px;
-    }
-    .pending.show { display: block; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<title>HK Carburant</title>
+<style>
+:root{
+  --bg:#f4f3f0; --surface:#fff; --ink:#16171a; --ink-2:#464a52; --muted:#7b7f88;
+  --line:#e6e4df; --line-2:#d6d3cc;
+  --orange:#ff6e00; --orange-600:#e35f00; --orange-ink:#b84a00; --orange-wash:#fff1e5;
+  --ok:#15803d; --ok-wash:#e8f6ee; --warn:#b45309; --warn-wash:#fff6e5; --err:#c62828; --err-wash:#fdecec;
+  --r-card:18px; --r-field:13px;
+  --shadow:0 1px 2px rgba(22,23,26,.05),0 0 0 1px rgba(22,23,26,.045);
+  --shadow-lift:0 6px 18px rgba(22,23,26,.10),0 0 0 1px rgba(22,23,26,.05);
+  --bar-h:84px;
+  --cond:'Barlow Condensed','Barlow',system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{font-family:'Barlow',system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);
+  min-height:100vh;overflow-x:hidden;padding-bottom:calc(var(--bar-h) + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;transition:transform .12s ease,background .18s ease,color .18s ease,box-shadow .18s ease,border-color .18s ease}
+button:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
-    .wrap { padding: 16px 14px 40px; max-width: 520px; margin: 0 auto; }
-    form { background: transparent; padding: 16px 6px 28px; }
-    .field { margin-bottom: 15px; }
-    .row { display: flex; gap: 10px; }
-    .row .field { flex: 1; min-width: 0; }
-    label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
-    label .req { color: var(--orange); }
-    input, select, textarea {
-      width: 100%; min-width: 0; max-width: 100%; padding: 13px 14px; font-size: 16px;
-      border: none; border-radius: 12px;
-      background: #fff; color: var(--text); outline: none;
-      box-shadow: 0 1px 3px rgba(15,15,16,.10);
-      -webkit-appearance: none; appearance: none;
-      transition: box-shadow .15s;
-    }
-    input[type="date"] { -webkit-appearance: none; min-height: 49px; }
-    input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 2px var(--orange); }
-    textarea { resize: none; min-height: 60px; }
-    .combo { position: relative; }
-    .combo-chev { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--orange); display: flex; pointer-events: none; }
-    .combo-list { list-style: none; margin: 6px 0 0; padding: 6px; position: absolute; left: 0; right: 0; top: 100%; background: #fff; border-radius: 12px; box-shadow: 0 10px 28px rgba(15,15,16,.18); max-height: 240px; overflow-y: auto; z-index: 30; display: none; }
-    .combo-list.show { display: block; }
-    .combo-list li { padding: 12px; border-radius: 9px; cursor: pointer; font-size: 15px; color: var(--text); }
-    .combo-list li.hl { background: var(--orange-l); }
-    .combo-list li.custom { color: var(--orange-d); background: var(--orange-l); font-weight: 700; }
-    .combo-list li.empty { color: var(--muted); font-size: 13px; cursor: default; }
-    .lock { position: fixed; inset: 0; z-index: 200; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
-    .lock.hidden { display: none; }
-    .lock-logo { height: 60px; width: auto; margin-bottom: 22px; }
-    .lock-title { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 5px; }
-    .lock-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
-    .lock-dots { display: flex; gap: 16px; margin-bottom: 14px; }
-    .lock-dots span { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--orange); background: #fff; }
-    .lock-dots span.on { background: var(--orange); }
-    .lock-err { min-height: 18px; font-size: 13px; font-weight: 700; color: var(--err); margin-bottom: 16px; }
-    .lock.shake .lock-dots { animation: lockShake .42s; }
-    @keyframes lockShake { 0%,100%{transform:translateX(0);} 20%,60%{transform:translateX(-9px);} 40%,80%{transform:translateX(9px);} }
-    .lock-pad { display: grid; grid-template-columns: repeat(3, 74px); gap: 14px; }
-    .lock-pad button { height: 74px; border-radius: 50%; border: none; background: var(--paper); color: var(--text); font-size: 26px; font-weight: 600; cursor: pointer; font-family: inherit; }
-    .lock-pad button:active { background: var(--orange-l); }
-    .lock-pad button[data-k="del"] { background: transparent; color: var(--orange); }
-    .lock-pad .lock-empty { visibility: hidden; }
+/* ─── Aperçu ─── */
+.apercu{display:none;background:var(--ink);color:#fff;font-size:12px;font-weight:700;text-align:center;padding:7px 12px;letter-spacing:.02em}
+.apercu.on{display:block}
+.apercu b{color:var(--orange)}
 
-    .mode { display: flex; gap: 8px; margin-bottom: 18px; }
-    .mode button {
-      flex: 1; padding: 14px 8px;
-      border: none; border-radius: 13px;
-      background: #fff; font-size: 14px; font-weight: 800;
-      color: var(--muted); cursor: pointer; line-height: 1.2;
-      box-shadow: 0 1px 3px rgba(15,15,16,.10);
-    }
-    .mode button small { display: block; font-size: 11px; font-weight: 500; margin-top: 3px; opacity: .8; }
-    .mode button.active[data-mode="station"] { background: var(--orange); color: #fff; box-shadow: 0 3px 10px rgba(255,110,0,.35); }
-    .mode button.active[data-mode="entreprise"] { background: var(--ink); color: #fff; box-shadow: 0 3px 10px rgba(21,22,26,.3); }
+/* ─── Verrou ─── */
+.lock{position:fixed;inset:0;z-index:300;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+.lock.hidden{animation:lockOut .32s ease forwards}
+@keyframes lockOut{to{opacity:0;visibility:hidden;transform:scale(1.03)}}
+.lock-logo{width:150px;height:auto;margin-bottom:26px}
+.lock-title{font-family:var(--cond);font-size:28px;font-weight:800;letter-spacing:.01em;text-transform:uppercase}
+.lock-sub{font-size:14px;color:var(--muted);margin:4px 0 26px}
+.lock-dots{display:flex;gap:18px;margin-bottom:12px}
+.lock-dots span{width:14px;height:14px;border-radius:50%;border:2px solid var(--line-2);transition:background .15s,border-color .15s,transform .15s}
+.lock-dots span.on{background:var(--orange);border-color:var(--orange);transform:scale(1.1)}
+.lock-err{min-height:20px;font-size:13px;font-weight:700;color:var(--err);margin-bottom:14px}
+.lock.shake .lock-dots{animation:shake .42s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-9px)}40%,80%{transform:translateX(9px)}}
+.lock-pad{display:grid;grid-template-columns:repeat(3,76px);gap:14px}
+.lock-pad button{height:76px;border-radius:50%;border:none;background:var(--bg);color:var(--ink);font-family:var(--cond);font-size:30px;font-weight:700}
+.lock-pad button:active{background:var(--orange-wash);color:var(--orange-ink)}
+.lock-pad button[data-k="del"]{background:transparent;color:var(--muted);font-family:inherit;font-size:24px}
+.lock-pad .lock-empty{visibility:hidden}
 
-    .photo-btn {
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-      width: 100%; padding: 16px;
-      border: 2px dashed var(--orange); border-radius: 13px; background: var(--orange-l);
-      color: var(--orange-d); font-size: 15px; font-weight: 700; cursor: pointer;
-    }
-    .photo-btn svg { width: 22px; height: 22px; }
-    input[type="file"] { display: none; }
-    .cuve-only { display: none; }
-    .preview { display: none; margin-top: 10px; position: relative; }
-    .preview img { width: 100%; border-radius: 12px; display: block; }
-    .preview .clear {
-      position: absolute; top: 8px; right: 8px;
-      background: rgba(0,0,0,.6); color: #fff; border: none;
-      width: 32px; height: 32px; border-radius: 50%; font-size: 18px; cursor: pointer;
-    }
-    button.submit {
-      width: 100%; padding: 16px; margin-top: 6px;
-      font-size: 17px; font-weight: 800; color: #fff;
-      background: var(--orange); border: none; border-radius: 13px; cursor: pointer;
-      box-shadow: 0 4px 12px rgba(255,110,0,.35);
-    }
-    button.submit:active { background: var(--orange-d); }
-    button.submit:disabled { opacity: .6; }
-    .toast {
-      position: fixed; left: 50%; bottom: 24px;
-      transform: translateX(-50%) translateY(120px);
-      background: var(--ink); color: #fff;
-      padding: 14px 22px; border-radius: 12px; font-size: 15px; font-weight: 600;
-      box-shadow: 0 8px 30px rgba(0,0,0,.3); transition: transform .3s; z-index: 50; max-width: 90%;
-    }
-    .toast.show { transform: translateX(-50%) translateY(0); }
-    .toast.ok { background: var(--ok); }
-    .toast.err { background: var(--err); }
-    .toast.warn { background: var(--orange-d); }
-    .hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
-  </style>
+/* ─── En-tête ─── */
+.top{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.94);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);
+  border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:12px}
+.top::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;background:var(--orange)}
+.top .mark{height:34px;width:auto;flex:0 0 auto}
+.top .tt{flex:1;min-width:0}
+.top .t1{font-family:var(--cond);font-size:20px;font-weight:800;line-height:1;text-transform:uppercase;letter-spacing:.01em}
+.top .t2{font-size:12.5px;color:var(--muted);margin-top:3px;text-transform:capitalize}
+.pend{display:none;align-items:center;gap:6px;background:var(--warn-wash);color:var(--warn);font-size:12px;font-weight:700;padding:6px 10px;border-radius:999px;white-space:nowrap}
+.pend.show{display:inline-flex}
+.pend i{width:7px;height:7px;border-radius:50%;background:var(--warn);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{opacity:.35}}
+
+/* ─── Mise en page ─── */
+.wrap{max-width:540px;margin:0 auto;padding:16px 14px 8px}
+.card{background:var(--surface);border-radius:var(--r-card);box-shadow:var(--shadow);padding:16px;margin-bottom:12px;animation:monte .32s cubic-bezier(.22,.9,.3,1) both}
+@keyframes monte{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.card-h{display:flex;align-items:center;gap:9px;margin:0 0 14px}
+.card-h svg{width:18px;height:18px;color:var(--orange)}
+.card-h h2{margin:0;font-family:var(--cond);font-size:17px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.card-h .tag{margin-left:auto;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+
+/* ─── Sélecteur de mode ─── */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#e9e7e2;padding:5px;border-radius:17px;margin-bottom:14px;position:relative}
+.seg button{border:none;background:transparent;border-radius:13px;padding:11px 8px;display:flex;align-items:center;justify-content:center;gap:9px;color:var(--ink-2);text-align:left}
+.seg button svg{width:24px;height:24px;flex:0 0 auto}
+.seg .lbl{display:block;font-family:var(--cond);font-size:17px;font-weight:800;text-transform:uppercase;letter-spacing:.02em;line-height:1}
+.seg .sub{display:block;font-size:11.5px;font-weight:600;opacity:.75;margin-top:2px}
+.seg button.active{background:var(--surface);box-shadow:var(--shadow-lift);color:var(--ink)}
+.seg button.active[data-mode="station"] svg{color:var(--orange)}
+.seg button.active[data-mode="entreprise"]{background:var(--ink);color:#fff}
+.seg button.active[data-mode="entreprise"] svg{color:var(--orange)}
+
+/* ─── Champs ─── */
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.row{display:flex;gap:10px;align-items:flex-end;margin-bottom:14px}
+.row:last-child{margin-bottom:0}
+.row .field{flex:1;min-width:0;margin-bottom:0}
+label.l{display:block;font-size:13px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+label.l .req{color:var(--orange)}
+input,select,textarea{width:100%;min-width:0;font-family:inherit;font-size:16px;color:var(--ink);background:#faf9f7;border:1.5px solid var(--line);
+  border-radius:var(--r-field);outline:none;-webkit-appearance:none;appearance:none;transition:border-color .15s,box-shadow .15s,background .15s}
+input,select{height:50px;padding:0 14px}
+textarea{padding:12px 14px;min-height:64px;resize:none}
+input::placeholder,textarea::placeholder{color:#a9acb2}
+input:focus,select:focus,textarea:focus{border-color:var(--orange);background:#fff;box-shadow:0 0 0 4px rgba(255,110,0,.14)}
+input[type="date"]{-webkit-appearance:none}
+input[type="date"]::-webkit-date-and-time-value{text-align:left}
+.big input{height:60px;font-family:var(--cond);font-size:28px;font-weight:700;letter-spacing:.01em}
+.unit{position:relative}
+.unit input{padding-right:46px}
+.unit .u{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);font-size:15px;pointer-events:none}
+.big .unit .u{font-family:var(--cond);font-size:20px}
+.hint{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.4}
+input[type="file"]{display:none}
+
+/* ─── Choix en pastilles ─── */
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.chips label{flex:1 1 auto;min-width:calc(33.33% - 5px);display:flex;align-items:center;justify-content:center;height:44px;padding:0 10px;border-radius:12px;
+  background:#faf9f7;border:1.5px solid var(--line);font-weight:700;font-size:14.5px;color:var(--ink-2);cursor:pointer;transition:all .15s;user-select:none;white-space:nowrap}
+.chips input:checked+label{background:var(--orange-wash);border-color:var(--orange);color:var(--orange-ink)}
+.chips input:focus-visible+label{box-shadow:0 0 0 4px rgba(255,110,0,.18)}
+.chips label:active{transform:scale(.97)}
+.chips.two label{min-width:calc(50% - 4px)}
+
+/* ─── Combo immatriculation ─── */
+.combo{position:relative}
+.combo input{text-transform:uppercase;padding-right:40px;font-weight:700;letter-spacing:.03em}
+.combo-chev{position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--orange);display:flex;pointer-events:none}
+.combo-list{list-style:none;margin:6px 0 0;padding:6px;position:absolute;left:0;right:0;top:100%;background:#fff;border-radius:14px;box-shadow:0 14px 34px rgba(22,23,26,.18),0 0 0 1px rgba(22,23,26,.05);max-height:260px;overflow-y:auto;z-index:30;display:none}
+.combo-list.show{display:block;animation:monte .16s ease both}
+.combo-list li{padding:12px;border-radius:10px;cursor:pointer;font-size:15px;font-weight:700;letter-spacing:.03em}
+.combo-list li:active{background:var(--bg)}
+.combo-list li.custom{color:var(--orange-ink);background:var(--orange-wash)}
+.combo-list li.empty{color:var(--muted);font-size:13px;font-weight:500;cursor:default;letter-spacing:0}
+
+/* ─── Photos ─── */
+.shot{position:relative;display:block;border-radius:15px;border:2px dashed #f3b98a;background:var(--orange-wash);min-height:118px;overflow:hidden;cursor:pointer;transition:border-color .15s,background .15s}
+.shot:active{transform:scale(.99)}
+.shot .ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:118px;padding:16px;text-align:center;color:var(--orange-ink)}
+.shot .ph svg{width:34px;height:34px}
+.shot .ph b{font-size:15.5px}
+.shot .ph span{font-size:12px;color:#a8643a;font-weight:600}
+.shot img{display:none;width:100%;max-height:260px;object-fit:cover}
+.shot.has{border:2px solid var(--ok);background:#fff}
+.shot.has .ph{display:none}
+.shot.has img{display:block}
+.shot .ok{display:none;position:absolute;left:10px;top:10px;background:var(--ok);color:#fff;font-size:12px;font-weight:800;padding:5px 10px 5px 8px;border-radius:999px;align-items:center;gap:5px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.shot .ok svg{width:14px;height:14px}
+.shot.has .ok{display:inline-flex;animation:pop .3s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+.shot .redo{display:none;position:absolute;right:10px;top:10px;background:rgba(22,23,26,.72);color:#fff;border:none;font-size:12.5px;font-weight:700;padding:7px 12px;border-radius:999px}
+.shot.has .redo{display:block}
+.badge{display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.badge.avant{background:var(--ink);color:#fff}
+.badge.apres{background:var(--orange);color:#fff}
+
+/* masqué par défaut uniquement côté cuve : setMode() rend '' (= style naturel) aux blocs station */
+.cuve-only{display:none}
+
+/* ─── Barre d'envoi ─── */
+.submit-bar{position:fixed;left:0;right:0;bottom:0;z-index:50;padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(244,243,240,0),var(--bg) 30%)}
+.submit-bar .in{max-width:540px;margin:0 auto}
+.submit{width:100%;height:58px;border:none;border-radius:16px;background:var(--orange);color:#fff;font-family:var(--cond);font-size:21px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 8px 20px rgba(255,110,0,.32)}
+.submit svg{width:22px;height:22px}
+.submit:active{background:var(--orange-600)}
+.submit:disabled{opacity:.6}
+.submit .spin{width:20px;height:20px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:tourne .7s linear infinite}
+@keyframes tourne{to{transform:rotate(360deg)}}
+
+/* ─── Confirmation ─── */
+.done{position:fixed;inset:0;z-index:260;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:rgba(255,255,255,.96);text-align:center;padding:24px}
+.done.show{display:flex;animation:fondu .2s ease both}
+@keyframes fondu{from{opacity:0}}
+.done .disc{width:96px;height:96px;border-radius:50%;background:var(--ok);display:flex;align-items:center;justify-content:center;animation:pop .42s cubic-bezier(.3,1.6,.5,1) both}
+.done.off .disc{background:var(--warn)}
+.done .disc svg{width:50px;height:50px;color:#fff}
+.done .disc path{stroke-dasharray:40;stroke-dashoffset:40;animation:trace .4s .18s ease forwards}
+@keyframes trace{to{stroke-dashoffset:0}}
+.done h3{margin:0;font-family:var(--cond);font-size:28px;font-weight:800;text-transform:uppercase}
+.done p{margin:0;font-size:15px;color:var(--ink-2);max-width:280px;line-height:1.45}
+
+.toast{position:fixed;left:50%;bottom:calc(var(--bar-h) + 14px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(160px);background:var(--ink);color:#fff;
+  padding:13px 20px;border-radius:13px;font-size:14.5px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.25);transition:transform .3s cubic-bezier(.3,1.2,.5,1);z-index:270;max-width:90%;text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--err)}
+
+@media (max-width:359px){
+  .row{flex-direction:column;gap:14px;align-items:stretch}
+  .seg .sub{display:none}
+  .seg button{gap:7px;padding:12px 4px}
+  .seg .lbl{font-size:15px}
+  .lock-pad{grid-template-columns:repeat(3,68px)}
+  .lock-pad button{height:68px}
+}
+</style>
 </head>
 <body>
-  <div id="lock" class="lock">
-    <img src="logo.png" alt="HK Terrassement" class="lock-logo">
-    <div class="lock-title">Code d'accès</div>
-    <div class="lock-sub">Entre le code pour ouvrir l'application</div>
-    <div class="lock-dots" id="lockDots"><span></span><span></span><span></span><span></span></div>
-    <div class="lock-err" id="lockErr"></div>
-    <div class="lock-pad" id="lockPad">
-      <button type="button" data-k="1">1</button>
-      <button type="button" data-k="2">2</button>
-      <button type="button" data-k="3">3</button>
-      <button type="button" data-k="4">4</button>
-      <button type="button" data-k="5">5</button>
-      <button type="button" data-k="6">6</button>
-      <button type="button" data-k="7">7</button>
-      <button type="button" data-k="8">8</button>
-      <button type="button" data-k="9">9</button>
-      <button type="button" class="lock-empty" disabled></button>
-      <button type="button" data-k="0">0</button>
-      <button type="button" data-k="del" aria-label="Effacer">⌫</button>
-    </div>
+
+<div id="lock" class="lock">
+  <img src="logo-full.png" alt="HK Terrassement" class="lock-logo">
+  <div class="lock-title">Code d'accès</div>
+  <div class="lock-sub">Entre le code pour ouvrir l'application</div>
+  <div class="lock-dots" id="lockDots"><span></span><span></span><span></span><span></span></div>
+  <div class="lock-err" id="lockErr"></div>
+  <div class="lock-pad" id="lockPad">
+    <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
+    <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
+    <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
+    <button type="button" class="lock-empty" disabled></button><button type="button" data-k="0">0</button>
+    <button type="button" data-k="del" aria-label="Effacer">&#9003;</button>
   </div>
-  <script>
-    (function () {
-      var CODE = "1664";
-      var lock = document.getElementById('lock'), dots = document.getElementById('lockDots').children, err = document.getElementById('lockErr');
-      var val = "";
-      function refresh() { for (var i = 0; i < 4; i++) dots[i].classList.toggle('on', i < val.length); }
-      function check() {
-        if (val === CODE) { lock.classList.add('hidden'); }
-        else { err.textContent = "Code incorrect"; lock.classList.add('shake'); setTimeout(function () { lock.classList.remove('shake'); val = ""; refresh(); }, 450); }
-      }
-      document.getElementById('lockPad').addEventListener('click', function (e) {
-        var b = e.target.closest('button'); if (!b) return; var k = b.getAttribute('data-k'); if (!k) return;
-        if (k === 'del') { val = val.slice(0, -1); err.textContent = ""; refresh(); return; }
-        if (val.length >= 4) return;
-        val += k; err.textContent = ""; refresh();
-        if (val.length === 4) setTimeout(check, 120);
-      });
-    })();
-  </script>
+</div>
 
-  <header>
-    <img src="logo.png" alt="HK Terrassement" class="logo">
-    <div class="pending" id="pending"></div>
-  </header>
+<div class="apercu" id="apercu"><b>APERÇU</b> — rien n'est envoyé au Google Sheet</div>
 
-  <div class="wrap">
-    <form id="form">
-      <div class="mode">
-        <button type="button" class="active" data-mode="station" id="btnStation">
-          Station externe<small>Ticket à payer</small>
-        </button>
-        <button type="button" data-mode="entreprise" id="btnEntreprise">
-          Pompe entreprise<small>Cuve interne</small>
-        </button>
+<header class="top">
+  <img src="logo-mark.png" alt="HK" class="mark">
+  <div class="tt"><div class="t1">Saisie carburant</div><div class="t2" id="today"></div></div>
+  <span class="pend" id="pending"><i></i><span id="pendTxt"></span></span>
+</header>
+
+<main class="wrap">
+  <div class="seg" role="tablist">
+    <button type="button" class="active" data-mode="station" id="btnStation" role="tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v17"/><path d="M2 22h13"/><path d="M14 10h2a2 2 0 0 1 2 2v4a1.5 1.5 0 0 0 3 0V8.5L18 6"/><path d="M6 8h5"/></svg>
+      <span><span class="lbl">Station</span><span class="sub">Ticket à payer</span></span>
+    </button>
+    <button type="button" data-mode="entreprise" id="btnEntreprise" role="tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 12h18"/><path d="M8 6V4h8v2"/></svg>
+      <span><span class="lbl">Cuve HK</span><span class="sub">Pompe entreprise</span></span>
+    </button>
+  </div>
+
+  <form id="form" novalidate>
+    <input type="hidden" name="type_pompe" id="typePompe" value="Station externe">
+
+    <section class="card cuve-only">
+      <div class="card-h">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 13l3-3"/><path d="M9 3h6"/></svg>
+        <h2>Compteur pompe</h2><span class="badge avant" style="margin-left:auto">Avant</span>
       </div>
-      <input type="hidden" name="type_pompe" id="typePompe" value="Station externe">
+      <label class="shot" for="fileAvant">
+        <span class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <b>Photo du compteur avant</b><span>Avant de servir — obligatoire</span></span>
+        <img alt="compteur avant">
+        <span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Photo OK</span>
+        <button type="button" class="redo">Reprendre</button>
+      </label>
+      <input type="file" id="fileAvant" data-photo="avant" accept="image/*" capture="environment">
+    </section>
 
-      <!-- Photo compteur AVANT : pompe entreprise, en tout premier -->
-      <div class="field cuve-only">
-        <label>Photo compteur AVANT le plein <span class="req">*</span></label>
-        <label class="photo-btn" for="fileAvant">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-            <circle cx="12" cy="13" r="4"/>
-          </svg>
-          <span class="cam-label">Photo du compteur (avant)</span>
-        </label>
-        <input type="file" id="fileAvant" data-photo="avant" accept="image/*" capture="environment">
-        <div class="preview"><img alt="compteur avant"><button type="button" class="clear">×</button></div>
-        <div class="hint">Relevé de la pompe AVANT de servir.</div>
+    <section class="card">
+      <div class="card-h">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 16V6a1 1 0 0 1 1-1h11v11"/><path d="M13 9h4l3 4v3"/><circle cx="6" cy="18" r="2"/><circle cx="17.5" cy="18" r="2"/></svg>
+        <h2>Véhicule</h2>
       </div>
-
-      <!-- Chauffeur : les deux modes -->
       <div class="field">
-        <label>Chauffeur <span class="req">*</span></label>
-        <input type="text" name="chauffeur" placeholder="Nom du chauffeur" required>
+        <label class="l" for="chauffeur">Chauffeur <span class="req">*</span></label>
+        <input type="text" id="chauffeur" name="chauffeur" placeholder="Nom du chauffeur" autocomplete="name" required>
       </div>
-
       <div class="row">
         <div class="field">
-          <label>Immatriculation <span class="req">*</span></label>
+          <label class="l" for="immatInput">Immatriculation <span class="req">*</span></label>
           <div class="combo" id="immatCombo">
-            <input type="text" name="immatriculation" id="immatInput" autocomplete="off" placeholder="AA-123-BB" style="text-transform:uppercase; padding-right:38px" required>
-            <span class="combo-chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></span>
+            <input type="text" name="immatriculation" id="immatInput" autocomplete="off" placeholder="AA-123-BB" required>
+            <span class="combo-chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span>
             <ul class="combo-list" id="immatList" role="listbox"></ul>
           </div>
-          <div class="hint">Choisis dans la liste ou tape une nouvelle plaque.</div>
         </div>
         <div class="field">
-          <label>Date <span class="req">*</span></label>
-          <input type="date" name="date" required>
+          <label class="l" for="dateIn">Date <span class="req">*</span></label>
+          <input type="date" id="dateIn" name="date" required>
         </div>
       </div>
-
-      <!-- Km : les deux modes -->
       <div class="field">
-        <label>Kilométrage compteur</label>
-        <input type="number" name="kilometrage" inputmode="numeric" placeholder="ex: 124500">
+        <label class="l" for="km">Kilométrage compteur</label>
+        <div class="unit"><input type="number" id="km" name="kilometrage" inputmode="numeric" placeholder="ex : 124500"><span class="u">km</span></div>
       </div>
+    </section>
 
-      <div class="row">
-        <div class="field">
-          <label>Carburant <span class="req">*</span></label>
-          <select name="carburant" required>
-            <option value="Gazole">Gazole</option>
-            <option value="GNR">GNR</option>
-            <option value="SP95">SP95</option>
-            <option value="SP95-E10">SP95-E10</option>
-            <option value="SP98">SP98</option>
-            <option value="AdBlue">AdBlue</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Litres <span class="req">*</span></label>
-          <input type="text" name="litres" inputmode="decimal" placeholder="ex: 58,40" required>
+    <section class="card">
+      <div class="card-h">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7C8 7.5 6 10.8 6 14a6 6 0 0 0 12 0c0-3.2-2-6.5-6-11.3z"/></svg>
+        <h2>Carburant</h2>
+      </div>
+      <div class="field">
+        <div class="chips" id="carbChips">
+          <input type="radio" name="carburant" id="c1" value="Gazole" checked><label for="c1">Gazole</label>
+          <input type="radio" name="carburant" id="c2" value="GNR"><label for="c2">GNR</label>
+          <input type="radio" name="carburant" id="c6" value="AdBlue"><label for="c6">AdBlue</label>
+          <input type="radio" name="carburant" id="c3" value="SP95"><label for="c3">SP95</label>
+          <input type="radio" name="carburant" id="c4" value="SP95-E10"><label for="c4">E10</label>
+          <input type="radio" name="carburant" id="c5" value="SP98"><label for="c5">SP98</label>
         </div>
       </div>
-
-      <!-- Prix / Montant : station uniquement -->
+      <div class="field big">
+        <label class="l" for="litres">Litres <span class="req">*</span></label>
+        <div class="unit"><input type="text" id="litres" name="litres" inputmode="decimal" placeholder="0" required><span class="u">L</span></div>
+      </div>
       <div class="row station-only">
         <div class="field">
-          <label>Prix / litre (€)</label>
-          <input type="text" name="prix_litre" inputmode="decimal" placeholder="ex: 1,789">
+          <label class="l" for="prix">Prix / litre</label>
+          <div class="unit"><input type="text" id="prix" name="prix_litre" inputmode="decimal" placeholder="1,789"><span class="u">€</span></div>
         </div>
         <div class="field">
-          <label>Montant TTC (€) <span class="req">*</span></label>
-          <input type="text" name="montant" inputmode="decimal" placeholder="ex: 104,48" required>
+          <label class="l" for="montant">Montant TTC <span class="req">*</span></label>
+          <div class="unit"><input type="text" id="montant" name="montant" inputmode="decimal" placeholder="104,48" required><span class="u">€</span></div>
         </div>
       </div>
-
-      <!-- Paiement : station uniquement -->
+      <div class="hint station-only" style="margin:-4px 0 14px">Deux valeurs suffisent : la troisième se calcule seule.</div>
       <div class="field station-only">
-        <label>Paiement</label>
-        <select name="paiement">
-          <option value="Carte carburant">Carte carburant</option>
-          <option value="CB entreprise">CB entreprise</option>
-          <option value="Garage MULLER">Garage MULLER</option>
-          <option value="Autre">Autre</option>
-        </select>
+        <label class="l">Paiement</label>
+        <div class="chips two">
+          <input type="radio" name="paiement" id="p1" value="Carte carburant" checked><label for="p1">Carte carburant</label>
+          <input type="radio" name="paiement" id="p2" value="CB entreprise"><label for="p2">CB entreprise</label>
+          <input type="radio" name="paiement" id="p3" value="Garage MULLER"><label for="p3">Garage MULLER</label>
+          <input type="radio" name="paiement" id="p4" value="Autre"><label for="p4">Autre</label>
+        </div>
       </div>
+    </section>
 
-      <!-- Photo ticket : station uniquement -->
-      <div class="field station-only">
-        <label>Photo du ticket <span class="req">*</span></label>
-        <label class="photo-btn" for="fileTicket">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-            <circle cx="12" cy="13" r="4"/>
-          </svg>
-          <span class="cam-label">Prendre en photo</span>
-        </label>
-        <input type="file" id="fileTicket" data-photo="ticket" accept="image/*" capture="environment">
-        <div class="preview"><img alt="ticket"><button type="button" class="clear">×</button></div>
-        <div class="hint">Photo compressée automatiquement avant l'envoi.</div>
+    <section class="card station-only">
+      <div class="card-h">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h3"/></svg>
+        <h2>Ticket</h2><span class="tag">Obligatoire</span>
       </div>
+      <label class="shot" for="fileTicket">
+        <span class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <b>Prendre le ticket en photo</b><span>Compressée automatiquement avant l'envoi</span></span>
+        <img alt="ticket">
+        <span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Photo OK</span>
+        <button type="button" class="redo">Reprendre</button>
+      </label>
+      <input type="file" id="fileTicket" data-photo="ticket" accept="image/*" capture="environment">
+    </section>
 
-      <!-- Photo compteur APRÈS : pompe entreprise uniquement -->
-      <div class="field cuve-only">
-        <label>Photo compteur APRÈS le plein <span class="req">*</span></label>
-        <label class="photo-btn" for="fileApres">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-            <circle cx="12" cy="13" r="4"/>
-          </svg>
-          <span class="cam-label">Photo du compteur (après)</span>
-        </label>
-        <input type="file" id="fileApres" data-photo="apres" accept="image/*" capture="environment">
-        <div class="preview"><img alt="compteur apres"><button type="button" class="clear">×</button></div>
-        <div class="hint">Relevé de la pompe APRÈS avoir servi.</div>
+    <section class="card cuve-only">
+      <div class="card-h">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 13l3-3"/><path d="M9 3h6"/></svg>
+        <h2>Compteur pompe</h2><span class="badge apres" style="margin-left:auto">Après</span>
       </div>
+      <label class="shot" for="fileApres">
+        <span class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <b>Photo du compteur après</b><span>Une fois le plein fait — obligatoire</span></span>
+        <img alt="compteur après">
+        <span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Photo OK</span>
+        <button type="button" class="redo">Reprendre</button>
+      </label>
+      <input type="file" id="fileApres" data-photo="apres" accept="image/*" capture="environment">
+    </section>
 
-      <!-- Note : station uniquement -->
-      <div class="field station-only">
-        <label>Note (optionnel)</label>
-        <textarea name="note" placeholder="Remarque éventuelle"></textarea>
+    <section class="card station-only">
+      <div class="field">
+        <label class="l" for="note">Note <span style="font-weight:500;color:var(--muted)">(facultatif)</span></label>
+        <textarea id="note" name="note" placeholder="Remarque éventuelle"></textarea>
       </div>
+    </section>
+  </form>
+</main>
 
-      <button type="submit" class="submit" id="submitBtn">Enregistrer le plein</button>
-    </form>
-  </div>
+<div class="submit-bar"><div class="in">
+  <button type="submit" form="form" class="submit" id="submitBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>
+    <span>Enregistrer le plein</span>
+  </button>
+</div></div>
 
-  <div class="toast" id="toast"></div>
+<div class="done" id="done">
+  <div class="disc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></div>
+  <h3 id="doneT">Plein enregistré</h3>
+  <p id="doneP">Merci, c'est transmis.</p>
+</div>
+<div class="toast" id="toast"></div>
 
-  <script>
-    /* ===== CONFIG (à éditer) ===== */
-    const WEBHOOK_URL = "https://hook.eu1.make.com/u9h5sjaxlb6qidcf6esgo9gcfw3nbtei";
-    const APP_TOKEN   = "HK-CHANGE-MOI-2026"; // sécurité : doit matcher le filtre Make
-    /* ============================= */
+<script>
+/* ===== CONFIG ===== */
+const WEBHOOK_URL = "https://hook.eu1.make.com/u9h5sjaxlb6qidcf6esgo9gcfw3nbtei";
+const APP_TOKEN   = "HK-CHANGE-MOI-2026";   // doit matcher le filtre Make
+const CODE        = "1664";
+/* APERÇU = true : version de démonstration, rien n'est envoyé.
+   À passer à false au moment de la mise en ligne. */
+const APERCU      = false;
+const PLATES = ["GT-255-BA","HJ-605-DC","HJ-813-ZF","FZ-813-DT","FE-982-KB","GP-453-RT","FP-321-JZ","EZ-180-AN","HC-109-AX","GT-675-ZB","GY-969-AX","AJ-378-QB"];
+/* =================== */
 
-    const QUEUE_KEY = "hk_carburant_queue";
-    const form = document.querySelector('#form');
-    const submitBtn = document.querySelector('#submitBtn');
-    const toast = document.querySelector('#toast');
-    const pending = document.querySelector('#pending');
-    const typePompe = document.querySelector('#typePompe');
-    const btnStation = document.querySelector('#btnStation');
-    const btnEntreprise = document.querySelector('#btnEntreprise');
+const QUEUE_KEY = "hk_carburant_queue";
+if (APERCU) document.getElementById('apercu').classList.add('on');
 
-    // Gestion générique des photos (ticket station + compteurs cuve avant/après)
-    const photos = { ticket: null, avant: null, apres: null };
-    const photoResets = [];
-    document.querySelectorAll('input[type="file"][data-photo]').forEach(input => {
-      const key = input.dataset.photo;
-      const block = input.closest('.field');
-      const previewWrap = block.querySelector('.preview');
-      const previewImg = previewWrap.querySelector('img');
-      const camLabel = block.querySelector('.cam-label');
-      const clearBtn = previewWrap.querySelector('.clear');
-      const defaultLabel = camLabel.textContent;
-      function reset() {
-        photos[key] = null; input.value = '';
-        previewWrap.style.display = 'none'; camLabel.textContent = defaultLabel;
-      }
-      photoResets.push(reset);
-      clearBtn.addEventListener('click', reset);
-      input.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const img = new Image();
-          img.onload = () => {
-            const maxW = 1600;
-            const scale = Math.min(1, maxW / img.width);
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width * scale;
-            canvas.height = img.height * scale;
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-            photos[key] = canvas.toDataURL('image/jpeg', 0.85);
-            previewImg.src = photos[key];
-            previewWrap.style.display = 'block';
-            camLabel.textContent = 'Changer la photo';
-          };
-          img.src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-    });
-    function resetAllPhotos() { photoResets.forEach(r => r()); }
+/* ── verrou ── */
+(function(){
+  const lock=document.getElementById('lock'), dots=document.getElementById('lockDots').children, err=document.getElementById('lockErr');
+  let val="";
+  const refresh=()=>{ for(let i=0;i<4;i++) dots[i].classList.toggle('on', i<val.length); };
+  function check(){
+    if (val===CODE){ lock.classList.add('hidden'); }
+    else { err.textContent="Code incorrect"; lock.classList.add('shake');
+      setTimeout(()=>{ lock.classList.remove('shake'); val=""; refresh(); },450); }
+  }
+  document.getElementById('lockPad').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return; const k=b.getAttribute('data-k'); if(!k) return;
+    if (k==='del'){ val=val.slice(0,-1); err.textContent=""; refresh(); return; }
+    if (val.length>=4) return;
+    val+=k; err.textContent=""; refresh();
+    if (val.length===4) setTimeout(check,120);
+  });
+})();
 
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
-    }
+const form=document.querySelector('#form'), submitBtn=document.querySelector('#submitBtn'),
+      toast=document.querySelector('#toast'), typePompe=document.querySelector('#typePompe'),
+      btnStation=document.querySelector('#btnStation'), btnEntreprise=document.querySelector('#btnEntreprise');
+const pad=n=>String(n).padStart(2,'0');
+const isoToday=()=>{ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); };
+document.getElementById('today').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 
+/* ── photos ── */
+const photos={ticket:null,avant:null,apres:null};
+const photoResets=[];
+document.querySelectorAll('input[type="file"][data-photo]').forEach(input=>{
+  const key=input.dataset.photo;
+  const tile=document.querySelector('label.shot[for="'+input.id+'"]');
+  const img=tile.querySelector('img');
+  function reset(){ photos[key]=null; input.value=''; img.removeAttribute('src'); tile.classList.remove('has'); }
+  photoResets.push(reset);
+  tile.querySelector('.redo').addEventListener('click',e=>{ e.preventDefault(); e.stopPropagation(); reset(); input.click(); });
+  input.addEventListener('change',e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const im=new Image();
+      im.onload=()=>{
+        const scale=Math.min(1,1600/im.width), c=document.createElement('canvas');
+        c.width=im.width*scale; c.height=im.height*scale;
+        c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+        photos[key]=c.toDataURL('image/jpeg',0.85);
+        img.src=photos[key]; tile.classList.add('has');
+      };
+      im.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+});
+const resetAllPhotos=()=>photoResets.forEach(r=>r());
 
-    form.date.value = new Date().toISOString().slice(0, 10);
+if ('serviceWorker' in navigator && !APERCU) navigator.serviceWorker.register('sw.js').catch(()=>{});
+form.date.value=isoToday();
 
-    function setMode(mode) {
-      const entreprise = mode === 'entreprise';
-      typePompe.value = entreprise ? 'Pompe entreprise' : 'Station externe';
-      btnStation.classList.toggle('active', !entreprise);
-      btnEntreprise.classList.toggle('active', entreprise);
-      document.querySelectorAll('.station-only').forEach(el => {
-        el.style.display = entreprise ? 'none' : '';
-        el.querySelectorAll('input, select, textarea').forEach(i => { i.disabled = entreprise; });
-      });
-      document.querySelectorAll('.cuve-only').forEach(el => {
-        el.style.display = entreprise ? 'block' : 'none';
-        el.querySelectorAll('input, select, textarea').forEach(i => { i.disabled = !entreprise; });
-      });
-    }
-    btnStation.addEventListener('click', () => setMode('station'));
-    btnEntreprise.addEventListener('click', () => setMode('entreprise'));
+/* ── mode station / cuve ── */
+function setMode(mode){
+  const ent=mode==='entreprise';
+  typePompe.value=ent?'Pompe entreprise':'Station externe';
+  btnStation.classList.toggle('active',!ent); btnEntreprise.classList.toggle('active',ent);
+  btnStation.setAttribute('aria-selected',!ent); btnEntreprise.setAttribute('aria-selected',ent);
+  document.querySelectorAll('.station-only').forEach(el=>{
+    el.style.display=ent?'none':''; el.querySelectorAll('input,select,textarea').forEach(i=>{ i.disabled=ent; });
+  });
+  document.querySelectorAll('.cuve-only').forEach(el=>{
+    el.style.display=ent?'block':'none'; el.querySelectorAll('input,select,textarea').forEach(i=>{ i.disabled=!ent; });
+  });
+}
+btnStation.addEventListener('click',()=>setMode('station'));
+btnEntreprise.addEventListener('click',()=>setMode('entreprise'));
+setMode('station');
 
-    function num(v) { return parseFloat((v || '').replace(',', '.')); }
-    function autoCalc() {
-      const l = num(form.litres.value);
-      const p = num(form.prix_litre.value);
-      const m = num(form.montant.value);
-      if (l > 0 && p > 0 && !m) form.montant.value = (l * p).toFixed(2).replace('.', ',');
-      else if (l > 0 && m > 0 && !p) form.prix_litre.value = (m / l).toFixed(3).replace('.', ',');
-    }
-    form.litres.addEventListener('blur', autoCalc);
-    form.prix_litre.addEventListener('blur', autoCalc);
-    form.montant.addEventListener('blur', autoCalc);
+/* ── calcul auto prix / montant ── */
+const num=v=>parseFloat((v||'').replace(',','.'));
+function autoCalc(){
+  const l=num(form.litres.value), p=num(form.prix_litre.value), m=num(form.montant.value);
+  if (l>0&&p>0&&!m) form.montant.value=(l*p).toFixed(2).replace('.',',');
+  else if (l>0&&m>0&&!p) form.prix_litre.value=(m/l).toFixed(3).replace('.',',');
+}
+['litres','prix_litre','montant'].forEach(k=>form[k].addEventListener('blur',autoCalc));
 
-    function showToast(msg, type) {
-      toast.textContent = msg;
-      toast.className = 'toast show ' + (type || '');
-      setTimeout(() => { toast.className = 'toast ' + (type || ''); }, 3500);
-    }
+function showToast(msg,type){
+  toast.textContent=msg; toast.className='toast show '+(type||'');
+  setTimeout(()=>{ toast.className='toast '+(type||''); },3200);
+}
+function showDone(offline){
+  const d=document.getElementById('done');
+  d.classList.toggle('off',!!offline);
+  document.getElementById('doneT').textContent=offline?'Enregistré hors ligne':'Plein enregistré';
+  document.getElementById('doneP').textContent=offline?"Pas de réseau : il partira tout seul dès que la connexion revient.":"Merci, c'est transmis.";
+  d.classList.remove('show'); void d.offsetWidth; d.classList.add('show');
+  setTimeout(()=>d.classList.remove('show'),offline?2200:1500);
+}
 
-    /* ===== File d'attente hors-ligne ===== */
-    function getQueue() { try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch { return []; } }
-    function setQueue(q) { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); updateBadge(); }
-    function updateBadge() {
-      const n = getQueue().length;
-      pending.textContent = n ? `⏳ ${n} plein(s) en attente de réseau — envoi automatique dès que possible` : '';
-      pending.classList.toggle('show', n > 0);
-    }
-    async function send(payload) {
-      const res = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-    }
-    async function flushQueue() {
-      let q = getQueue();
-      if (!q.length) return;
-      const remaining = [];
-      for (const item of q) {
-        try { await send(item); } catch { remaining.push(item); }
-      }
-      setQueue(remaining);
-      if (q.length && !remaining.length) showToast(`✅ ${q.length} plein(s) synchronisé(s)`, 'ok');
-    }
-    window.addEventListener('online', flushQueue);
+/* ── file d'attente hors-ligne ── */
+const getQueue=()=>{ try{ return JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]'); }catch{ return []; } };
+function setQueue(q){ localStorage.setItem(QUEUE_KEY,JSON.stringify(q)); updateBadge(); }
+function updateBadge(){
+  const n=getQueue().length, el=document.getElementById('pending');
+  document.getElementById('pendTxt').textContent=n+(n>1?' en attente':' en attente');
+  el.classList.toggle('show',n>0);
+}
+async function send(payload){
+  if (APERCU){ await new Promise(r=>setTimeout(r,700)); console.info('[APERÇU] non envoyé :',Object.assign({},payload,{photo:payload.photo?'(photo)':undefined,photo_avant:payload.photo_avant?'(photo)':undefined,photo_apres:payload.photo_apres?'(photo)':undefined})); return; }
+  const res=await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  if (!res.ok) throw new Error('HTTP '+res.status);
+}
+async function flushQueue(){
+  const q=getQueue(); if(!q.length) return;
+  const reste=[];
+  for (const it of q){ try{ await send(it); }catch{ reste.push(it); } }
+  setQueue(reste);
+  if (q.length&&!reste.length) showToast('✅ '+q.length+' plein'+(q.length>1?'s':'')+' synchronisé'+(q.length>1?'s':''));
+}
+window.addEventListener('online',flushQueue);
 
-    /* ===== Combobox immatriculation (liste + saisie libre) ===== */
-    (function () {
-      const PLATES = ["GT-255-BA", "HJ-605-DC", "HJ-813-ZF", "FZ-813-DT", "FE-982-KB", "GP-453-RT", "FP-321-JZ", "EZ-180-AN", "HC-109-AX", "GT-675-ZB", "GY-969-AX"];
-      const combo = document.querySelector('#immatCombo');
-      const input = document.querySelector('#immatInput');
-      const listEl = document.querySelector('#immatList');
-      let openState = false;
-      function render() {
-        const q = input.value.trim().toUpperCase();
-        const matches = PLATES.filter(p => p.indexOf(q) > -1);
-        const custom = q && PLATES.indexOf(q) === -1;
-        listEl.innerHTML = '';
-        if (custom) {
-          const li = document.createElement('li');
-          li.className = 'custom';
-          li.textContent = 'Utiliser « ' + q + ' »';
-          li.addEventListener('mousedown', e => { e.preventDefault(); choose(q); });
-          listEl.appendChild(li);
-        }
-        matches.forEach(p => {
-          const li = document.createElement('li');
-          li.textContent = p;
-          li.addEventListener('mousedown', e => { e.preventDefault(); choose(p); });
-          listEl.appendChild(li);
-        });
-        if (!matches.length && !custom) {
-          const li = document.createElement('li'); li.className = 'empty'; li.textContent = 'Aucune plaque'; listEl.appendChild(li);
-        }
-      }
-      function setOpen(o) { openState = o; listEl.classList.toggle('show', o); if (o) render(); }
-      function choose(v) { input.value = v; setOpen(false); }
-      input.addEventListener('focus', () => setOpen(true));
-      input.addEventListener('input', () => { if (openState) render(); else setOpen(true); });
-      document.addEventListener('mousedown', e => { if (!combo.contains(e.target)) setOpen(false); });
-    })();
+/* ── combobox immatriculation (liste + saisie libre) ── */
+(function(){
+  const combo=document.querySelector('#immatCombo'), input=document.querySelector('#immatInput'), listEl=document.querySelector('#immatList');
+  let open=false;
+  function render(){
+    const q=input.value.trim().toUpperCase();
+    const matches=PLATES.filter(p=>p.indexOf(q)>-1);
+    const custom=q&&PLATES.indexOf(q)===-1;
+    listEl.innerHTML='';
+    if (custom){ const li=document.createElement('li'); li.className='custom'; li.textContent='Utiliser « '+q+' »';
+      li.addEventListener('mousedown',e=>{ e.preventDefault(); choose(q); }); listEl.appendChild(li); }
+    matches.forEach(p=>{ const li=document.createElement('li'); li.textContent=p;
+      li.addEventListener('mousedown',e=>{ e.preventDefault(); choose(p); }); listEl.appendChild(li); });
+    if (!matches.length&&!custom){ const li=document.createElement('li'); li.className='empty'; li.textContent='Aucune plaque'; listEl.appendChild(li); }
+  }
+  const setOpen=o=>{ open=o; listEl.classList.toggle('show',o); if(o) render(); };
+  const choose=v=>{ input.value=v; setOpen(false); };
+  input.addEventListener('focus',()=>setOpen(true));
+  input.addEventListener('input',()=>{ if(open) render(); else setOpen(true); });
+  document.addEventListener('mousedown',e=>{ if(!combo.contains(e.target)) setOpen(false); });
+})();
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const isStation = typePompe.value === 'Station externe';
-      if (isStation && !photos.ticket) { showToast('Ajoute la photo du ticket', 'err'); return; }
-      if (!isStation && !photos.avant) { showToast('Photo du compteur AVANT obligatoire', 'err'); return; }
-      if (!isStation && !photos.apres) { showToast('Photo du compteur APRÈS obligatoire', 'err'); return; }
+/* ── envoi ── */
+form.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const isStation=typePompe.value==='Station externe';
+  // champs obligatoires visibles
+  const manquant=[...form.querySelectorAll('[required]')].find(i=>!i.disabled&&!String(i.value).trim());
+  if (manquant){ manquant.focus(); manquant.scrollIntoView({block:'center',behavior:'smooth'}); showToast('Champ obligatoire : '+(manquant.closest('.field').querySelector('label.l')||{textContent:'à remplir'}).textContent.replace('*','').trim(),'err'); return; }
+  if (isStation&&!photos.ticket){ showToast('Ajoute la photo du ticket','err'); return; }
+  if (!isStation&&!photos.avant){ showToast('Photo du compteur AVANT obligatoire','err'); return; }
+  if (!isStation&&!photos.apres){ showToast('Photo du compteur APRÈS obligatoire','err'); return; }
 
-      const data = Object.fromEntries(new FormData(form).entries());
-      data.immatriculation = (data.immatriculation || '').toUpperCase();
-      ['litres', 'prix_litre', 'montant'].forEach(k => { if (data[k]) data[k] = data[k].replace(',', '.'); });
-      if (photos.ticket) data.photo = photos.ticket.split(',')[1];
-      if (photos.avant) data.photo_avant = photos.avant.split(',')[1];
-      if (photos.apres) data.photo_apres = photos.apres.split(',')[1];
-      const _d = new Date();
-      const _p = n => String(n).padStart(2, '0');
-      data.envoye_le = `${_p(_d.getDate())}/${_p(_d.getMonth() + 1)}/${_d.getFullYear()} ${_p(_d.getHours())}h${_p(_d.getMinutes())}`;
-      data.token = APP_TOKEN;
+  const data=Object.fromEntries(new FormData(form).entries());
+  data.immatriculation=(data.immatriculation||'').toUpperCase();
+  ['litres','prix_litre','montant'].forEach(k=>{ if(data[k]) data[k]=data[k].replace(',','.'); });
+  if (photos.ticket) data.photo=photos.ticket.split(',')[1];
+  if (photos.avant)  data.photo_avant=photos.avant.split(',')[1];
+  if (photos.apres)  data.photo_apres=photos.apres.split(',')[1];
+  const d=new Date();
+  data.envoye_le=pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()+' '+pad(d.getHours())+'h'+pad(d.getMinutes());
+  data.token=APP_TOKEN;
 
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Envoi en cours…';
-      const mode = isStation ? 'station' : 'entreprise';
+  submitBtn.disabled=true;
+  submitBtn.innerHTML='<span class="spin"></span><span>Envoi en cours…</span>';
+  const mode=isStation?'station':'entreprise';
+  let horsLigne=false;
+  try{ await send(data); }
+  catch(err){ const q=getQueue(); q.push(data); setQueue(q); horsLigne=true; }
+  finally{
+    showDone(horsLigne);
+    form.reset(); form.date.value=isoToday(); resetAllPhotos(); setMode(mode);
+    submitBtn.disabled=false;
+    submitBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg><span>Enregistrer le plein</span>';
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+});
 
-      try {
-        await send(data);
-        showToast('✅ Plein enregistré', 'ok');
-      } catch (err) {
-        const q = getQueue(); q.push(data); setQueue(q);
-        showToast('📥 Hors-ligne : enregistré, sera envoyé automatiquement', 'warn');
-      } finally {
-        form.reset();
-        form.date.value = new Date().toISOString().slice(0, 10);
-        resetAllPhotos();
-        setMode(mode);
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Enregistrer le plein';
-      }
-    });
-
-    updateBadge();
-    flushQueue();
-  </script>
+updateBadge();
+flushQueue();
+</script>
 </body>
 </html>

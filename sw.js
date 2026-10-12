@@ -1,11 +1,13 @@
 // Service worker — cache l'app pour qu'elle s'ouvre même sans réseau
-const CACHE = "hk-carburant-v16";
+const CACHE = "hk-carburant-v17";
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./icon.png",
-  "./logo.png"
+  "./logo.png",
+  "./logo-full.png",
+  "./logo-mark.png"
 ];
 
 self.addEventListener("install", (e) => {
